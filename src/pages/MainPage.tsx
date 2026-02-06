@@ -12,7 +12,8 @@ import type { RankingItem } from "../@types/api";
 
 const Container = styled.div`
   width: 100%;
-  height: 100vh;
+  height: 100vh; /* fallback for older browsers */
+  height: 100dvh;
   position: relative;
   overflow: hidden;
   /* background: linear-gradient(
