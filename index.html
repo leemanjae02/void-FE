@@ -9,5 +9,22 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Global SVG Filter for Dissolve/Sand Effect -->
+    <svg style="position: absolute; width: 0; height: 0; pointer-events: none;">
+      <defs>
+        <filter id="noise-filter">
+          <feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="3" stitchTiles="stitch" />
+        </filter>
+        <filter id="dissolve-filter-weak">
+          <feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="1" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" />
+        </filter>
+        <filter id="dissolve-filter">
+          <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="2" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="80" />
+          <feGaussianBlur stdDeviation="1.5" />
+        </filter>
+      </defs>
+    </svg>
   </body>
 </html>

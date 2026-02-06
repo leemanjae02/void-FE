@@ -100,6 +100,10 @@ export default function MainPage() {
     }, 1000);
   }, [message, isLoading]);
 
+  const handleClearResponse = useCallback(() => {
+    setResponse(null);
+  }, []);
+
   return (
     <Container>
       <BgBlob $color="#c7b8ff" $size={400} $top="10%" $left="15%" />
@@ -112,7 +116,7 @@ export default function MainPage() {
           camera={{ position: [0, 0, 6], fov: 50 }}
           gl={{ antialias: true, alpha: true }}
         >
-          <ParticleSphere color="#c0c0c0" />
+          <ParticleSphere color="#c0c0c0" onClick={handleClearResponse} />
           <OrbitControls
             enableZoom={false}
             enablePan={false}

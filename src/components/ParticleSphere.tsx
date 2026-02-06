@@ -1,9 +1,10 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 interface ParticleSphereProps {
   color?: string;
+  onClick?: () => void;
 }
 
 /**
@@ -112,6 +113,7 @@ const fragmentShader = /* glsl */ `
 
 export default function ParticleSphere({
   color = "#4a90d9",
+  onClick,
 }: ParticleSphereProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -154,10 +156,16 @@ export default function ParticleSphere({
     []
   );
 
+  // Update color only when the color prop changes
+  useEffect(() => {
+    if (materialRef.current) {
+      materialRef.current.uniforms.uColor.value.set(color);
+    }
+  }, [color]);
+
   useFrame((_, delta) => {
     if (materialRef.current) {
       materialRef.current.uniforms.uTime.value += delta;
-      materialRef.current.uniforms.uColor.value.set(color);
     }
     if (pointsRef.current) {
       // Diagonal rotation: left-top → right-bottom axis
@@ -168,7 +176,7 @@ export default function ParticleSphere({
   });
 
   return (
-    <points ref={pointsRef}>
+    <points ref={pointsRef} onClick={onClick}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"

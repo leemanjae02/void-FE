@@ -81,9 +81,19 @@ export default function ResponseBox({ content }: ResponseBoxProps) {
     <AnimatePresence>
       {content && (
         <GlassCard
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
+          initial={{ opacity: 0, y: 12, filter: "blur(0px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{
+            opacity: [1, 1, 0], // 처음엔 불투명하다가 나중에 사라짐
+            y: [0, -10, -60], // 살짝 떴다가 확 날아감
+            scale: [1, 1.02, 1.2], // 팽창하다가 터짐
+            filter: [
+              "blur(0px) url(#dissolve-filter-weak)", // 초기: 미세한 노이즈
+              "blur(2px) url(#dissolve-filter)", // 중반: 흩어짐 시작
+              "blur(12px) url(#dissolve-filter)", // 후반: 완전 분해
+            ],
+            transition: { duration: 2.2, times: [0, 0.3, 1], ease: "anticipate" },
+          }}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
           {displayedContent}
