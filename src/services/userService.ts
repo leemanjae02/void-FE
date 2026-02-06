@@ -2,7 +2,7 @@ import axios from "axios";
 import type { AskResponse, RankingResponse } from "../@types/api";
 
 // 환경변수에서 API URL을 가져오거나 기본값 사용
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 // Axios 인스턴스 생성
 const api = axios.create({
