@@ -77,21 +77,36 @@ const KeywordArea = styled.div`
   left: 40px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   z-index: 10;
+`;
+
+const KeywordTitle = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(26, 26, 46, 0.7);
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
 `;
 
 export default function MainPage() {
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = useCallback(async () => {
     if (!message.trim() || isLoading) return;
-    
+
+    // Mock Error Check
+    if (message.toLowerCase().includes("error")) {
+      setError("입력하신 내용에 개인정보(예: 전화번호)가 포함되어 있습니다.");
+      return;
+    }
+
     setIsLoading(true);
     setResponse(null); // Clear previous response
-    
+
     // Simulate network delay
     setTimeout(() => {
       setResponse(`You said: "${message}"`);
@@ -116,7 +131,11 @@ export default function MainPage() {
           camera={{ position: [0, 0, 6], fov: 50 }}
           gl={{ antialias: true, alpha: true }}
         >
-          <ParticleSphere color="#c0c0c0" onClick={handleClearResponse} />
+          <ParticleSphere
+            color="#c0c0c0"
+            onClick={handleClearResponse}
+            hasResponse={!!response}
+          />
           <OrbitControls
             enableZoom={false}
             enablePan={false}
@@ -125,9 +144,10 @@ export default function MainPage() {
         </Canvas>
       </CanvasWrapper>
       <KeywordArea>
-        <GlassCard content={"키워드1"} />
-        <GlassCard content={"키워드2"} />
-        <GlassCard content={"키워드3"} />
+        <KeywordTitle>현재 사용자가 가장 많이 선택한 키워드</KeywordTitle>
+        <GlassCard content={"디지털 가디언"} percentage={72} color="#c7b8ff" />
+        <GlassCard content={"사이버 보안"} percentage={45} color="#b8e0ff" />
+        <GlassCard content={"미래 기술"} percentage={28} color="#ffb8d0" />
       </KeywordArea>
 
       <ResponseArea>
@@ -137,9 +157,13 @@ export default function MainPage() {
       <BottomBar>
         <ChatInput
           value={message}
-          onChange={setMessage}
+          onChange={(val) => {
+            setMessage(val);
+            if (error) setError(null); // Clear error on typing
+          }}
           onSubmit={handleSubmit}
           disabled={isLoading}
+          error={error}
         />
         <SendButton onClick={handleSubmit} disabled={isLoading} />
       </BottomBar>

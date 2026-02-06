@@ -5,35 +5,24 @@ import * as THREE from "three";
 interface ParticleSphereProps {
   color?: string;
   onClick?: () => void;
+  hasResponse?: boolean;
 }
 
-/**
- * ParticleSphere - High-density, dots-only particle sphere.
- *
- * How the shader achieves the "dots only" look:
- * - THREE.Points renders each vertex as a single square point sprite — never a line.
- * - gl_PointSize is kept small (1–3 device pixels) so each particle reads as a fine dot/grain.
- * - The fragment shader uses a simple radial falloff to soften each dot, but the tiny size
- *   means they still read as individual specks, not soft circles.
- * - NO lines, trails, or streaks are ever generated — all "motion blur" texture comes from
- *   the sheer density of 30,000+ points and their varying brightness.
- *
- * Performance notes:
- * - BufferGeometry stores all vertex data in typed arrays uploaded once to the GPU.
- * - Custom ShaderMaterial runs all animation (noise displacement, shimmer) on the GPU.
- * - Single draw call for all 30k particles. Only one float uniform (uTime) updates per frame.
- */
+// ... (Constants remains same)
 const PARTICLE_COUNT = 1700;
 const SPHERE_RADIUS = 1;
 
-// Vertex shader: noise-based radial displacement for organic volume,
-// per-particle shimmer brightness passed via varying.
+// Vertex shader: Enhanced to react to uHover and uActive
 const vertexShader = /* glsl */ `
   uniform float uTime;
+  uniform float uHover;   // 0 -> 1 (Mouse Over)
+  uniform float uActive;  // 0 -> 1 (Has Response)
+  
   attribute float aRandom;
   attribute float aPhase;
   attribute float aBrightness;
   varying float vAlpha;
+  varying float vHover; // Pass hover state to fragment
 
   // Compact 3D simplex-style noise (hash-based)
   vec3 hash3(vec3 p) {
@@ -65,58 +54,77 @@ const vertexShader = /* glsl */ `
   }
 
   void main() {
-    // Noise-based displacement: gentle push along radial direction
+    vHover = uHover;
+    
+    // Noise-based displacement: 
+    // uActive increases amplitude slightly (breathing)
+    // uHover makes it chaotic (vibration)
     vec3 dir = normalize(position);
-    float n = noise3D(position * 2.5 + uTime * 0.2);
-    float displacement = (n - 0.5) * 0.08;
+    float noiseSpeed = 0.2 + uHover * 2.0; // Faster noise when hovered
+    float n = noise3D(position * 2.5 + uTime * noiseSpeed);
+    
+    float baseDisplacement = (n - 0.5) * 0.08;
+    float activeDisplacement = uActive * 0.05 * sin(uTime * 3.0); // Pulse
+    float hoverDisplacement = uHover * (n - 0.5) * 0.3; // Strong vibration
+    
+    float displacement = baseDisplacement + activeDisplacement + hoverDisplacement;
 
-    // Subtle breathing: slow radial oscillation per particle
+    // Subtle breathing base
     float breathe = sin(uTime * 0.8 + aPhase * 6.2831) * 0.02 * aRandom;
 
     vec3 displaced = position + dir * (displacement + breathe);
 
-    // Vertical wave: each particle bobs up/down at its own speed & phase
+    // Wave effect
     float wave = sin(uTime * (0.8 + aRandom * 1.2) + aPhase * 6.2831);
     displaced.y += wave * 0.12 * (0.5 + aRandom);
 
-    // Shimmer: smooth brightness variation
-    float shimmer = sin(uTime * (1.5 + aRandom * 2.0) + aPhase * 6.2831);
+    // Shimmer & Brightness
+    float shimmer = sin(uTime * (1.5 + uHover * 10.0 + aRandom * 2.0) + aPhase * 6.2831);
     shimmer = shimmer * 0.5 + 0.5; // 0→1
+    
+    // Brightness increases with activity and hover
     float brightness = pow(shimmer, 3.5) * 0.5 + aBrightness * 0.5;
+    brightness += uActive * 0.2 + uHover * 0.5; 
+    
     vAlpha = 0.2 + brightness * 0.6;
 
     vec4 mvPosition = modelViewMatrix * vec4(displaced, 1.0);
 
-    // Point size tuned for ~1200 particles on radius 1: visible but not blobby
-    gl_PointSize = (1.0 + aBrightness * 1.5) * (50.0 / -mvPosition.z);
+    // Particles get slightly larger when active/hovered
+    float scale = 1.0 + uActive * 0.3 + uHover * 0.5;
+    gl_PointSize = (scale + aBrightness * 1.5) * (50.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
 
-// Fragment shader: renders each point as a tiny dot with soft radial falloff.
-// The small gl_PointSize means even with softening, they read as discrete grains.
+// Fragment shader: Color shift on hover
 const fragmentShader = /* glsl */ `
   uniform vec3 uColor;
   varying float vAlpha;
+  varying float vHover;
 
   void main() {
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
 
-    // Soft radial falloff for subtle anti-aliasing at dot edges
     float strength = 1.0 - smoothstep(0.0, 0.5, dist);
 
-    // On white background: use color directly, control visibility through alpha only
-    gl_FragColor = vec4(uColor, vAlpha * strength);
+    // Mix base color with a warning color (e.g., Red/Orange) based on hover
+    vec3 warningColor = vec3(1.0, 0.3, 0.3); // Reddish
+    vec3 finalColor = mix(uColor, warningColor, vHover * 0.8);
+
+    gl_FragColor = vec4(finalColor, vAlpha * strength);
   }
 `;
 
 export default function ParticleSphere({
   color = "#4a90d9",
   onClick,
+  hasResponse = false,
 }: ParticleSphereProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const hoverRef = useRef(0); // 0: None, 1: Hovered (Target value)
 
   const { positions, randoms, phases, brightnesses } = useMemo(() => {
     const pos = new Float32Array(PARTICLE_COUNT * 3);
@@ -151,6 +159,8 @@ export default function ParticleSphere({
     () => ({
       uTime: { value: 0 },
       uColor: { value: new THREE.Color(color) },
+      uHover: { value: 0 },
+      uActive: { value: 0 },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -165,18 +175,54 @@ export default function ParticleSphere({
 
   useFrame((_, delta) => {
     if (materialRef.current) {
+      // Smoothly interpolate uniforms
+      const targetActive = hasResponse ? 1 : 0;
+      // Only trigger red/chaotic hover effect if there's a response to clear
+      const targetHover = hasResponse ? hoverRef.current : 0;
+      
+      materialRef.current.uniforms.uActive.value = THREE.MathUtils.lerp(
+        materialRef.current.uniforms.uActive.value,
+        targetActive,
+        delta * 3
+      );
+      
+      materialRef.current.uniforms.uHover.value = THREE.MathUtils.lerp(
+        materialRef.current.uniforms.uHover.value,
+        targetHover,
+        delta * 5
+      );
+
       materialRef.current.uniforms.uTime.value += delta;
     }
+
     if (pointsRef.current) {
-      // Diagonal rotation: left-top → right-bottom axis
-      const speed = 0.05; // ← 회전 속도
-      pointsRef.current.rotation.y += delta * speed;
-      pointsRef.current.rotation.x += delta * speed * 0.6;
+      // Base speed + Active speed + Hover speed (FAST)
+      let rotationSpeed = 0.05;
+      if (hasResponse) {
+        rotationSpeed += 0.05; // Slightly faster when active
+        if (hoverRef.current > 0.5) {
+          rotationSpeed += 0.4; // MUCH faster on hover ONLY if hasResponse
+        }
+      }
+
+      pointsRef.current.rotation.y += delta * rotationSpeed;
+      pointsRef.current.rotation.x += delta * rotationSpeed * 0.6;
     }
   });
 
   return (
-    <points ref={pointsRef} onClick={onClick}>
+    <points 
+      ref={pointsRef} 
+      onClick={onClick}
+      onPointerOver={() => { 
+        hoverRef.current = 1; 
+        if (hasResponse) document.body.style.cursor = "pointer"; 
+      }}
+      onPointerOut={() => { 
+        hoverRef.current = 0; 
+        document.body.style.cursor = "auto";
+      }}
+    >
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
