@@ -6,7 +6,7 @@ export interface BaseResponse<T> {
 }
 
 export interface AskRequest {
-  content: string;
+  text: string;
 }
 
 export interface AskResult {
@@ -16,7 +16,7 @@ export interface AskResult {
 
 export interface RankingItem {
   keyword: string;
-  percentage: string; /* "11%" 형태의 문자열 */
+  percentage: string /* "11%" 형태의 문자열 */;
 }
 
 export type AskResponse = BaseResponse<AskResult>;

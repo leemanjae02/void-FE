@@ -17,9 +17,9 @@ export const userService = {
    * 사용자 질문을 전송하고 답변을 받습니다.
    * POST /ask
    */
-  ask: async (content: string): Promise<AskResponse> => {
+  ask: async (text: string): Promise<AskResponse> => {
     try {
-      const response = await api.post<AskResponse>("/ask", { content });
+      const response = await api.post<AskResponse>("/ask", { text });
       return response.data;
     } catch (error) {
       console.error("Ask API Error:", error);
