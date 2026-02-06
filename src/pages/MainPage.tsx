@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import axios from "axios";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import styled from "styled-components";
@@ -178,7 +179,11 @@ export default function MainPage() {
       }
     } catch (err) {
       console.error(err);
-      setError("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      }
     } finally {
       setIsLoading(false);
     }
