@@ -124,6 +124,7 @@ const KEYWORD_COLORS = ["#c7b8ff", "#ffb8d0", "#b8e0ff"];
 export default function MainPage() {
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState<string | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraZ, setCameraZ] = useState(6);
@@ -172,7 +173,8 @@ export default function MainPage() {
       const res = await userService.ask(message);
 
       if (res.isSuccess) {
-        setResponse(res.result.answer);
+        setResponse(res.result.answer || null);
+        setHasInteracted(true);
         setMessage("");
       } else {
         setError(res.message || "서버에서 오류가 발생했습니다.");
@@ -248,7 +250,13 @@ export default function MainPage() {
       </KeywordArea>
 
       <ResponseArea>
-        <ResponseBox content={response} />
+        <ResponseBox
+          content={
+            !hasInteracted && response === null
+              ? "VOID는 별도의 회원가입 절차가 없으며, 서비스 이용 과정에서 어떠한 개인정보도 서버에 저장하지 않으므로 안심하고 이용하실 수 있습니다."
+              : response
+          }
+        />
       </ResponseArea>
 
       <BottomBar>
