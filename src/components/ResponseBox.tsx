@@ -1,0 +1,94 @@
+import { useState, useEffect } from "react";
+import styled from "styled-components";
+import { motion, AnimatePresence } from "framer-motion";
+
+const GlassCard = styled(motion.div)`
+  position: relative;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 20px 24px;
+
+  /* Glassmorphism */
+  background: rgba(255, 255, 255, 0.45); /* 투명도 */
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+
+  font-size: 15px;
+  line-height: 1.7;
+  color: #1a1a2e;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  /* Light reflection: diagonal shine across the glass surface */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 24px;
+    background: linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.1) 40%,
+      transparent 50%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(31, 38, 135, 0.15);
+    border-radius: 2px;
+  }
+`;
+
+interface ResponseBoxProps {
+  content: string | null;
+}
+
+export default function ResponseBox({ content }: ResponseBoxProps) {
+  const [displayedContent, setDisplayedContent] = useState("");
+
+  useEffect(() => {
+    if (!content) {
+      setDisplayedContent("");
+      return;
+    }
+
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (currentIndex < content.length) {
+        setDisplayedContent(content.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, 30); // 타자 속도 (ms)
+
+    return () => clearInterval(typingInterval);
+  }, [content]);
+
+  return (
+    <AnimatePresence>
+      {content && (
+        <GlassCard
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+        >
+          {displayedContent}
+        </GlassCard>
+      )}
+    </AnimatePresence>
+  );
+}
