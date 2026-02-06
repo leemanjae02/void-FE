@@ -50,6 +50,9 @@ const CanvasWrapper = styled.div`
   position: absolute;
   top: 0;
   left: 0;
+  &:hover {
+    cursor: pointer;
+  }
 `;
 
 const ResponseArea = styled.div`
