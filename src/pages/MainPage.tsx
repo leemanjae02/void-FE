@@ -129,6 +129,7 @@ export default function MainPage() {
   const [error, setError] = useState<string | null>(null);
   const [cameraZ, setCameraZ] = useState(6);
   const [keywords, setKeywords] = useState<RankingItem[]>([]);
+  const [keywordsLoading, setKeywordsLoading] = useState(true);
 
   // Camera resize logic
   useEffect(() => {
@@ -147,6 +148,7 @@ export default function MainPage() {
   useEffect(() => {
     const fetchKeywords = async () => {
       try {
+        if (keywords.length === 0) setKeywordsLoading(true);
         const res = await userService.getTop3Keywords();
 
         if (res.isSuccess && Array.isArray(res.result)) {
@@ -154,6 +156,8 @@ export default function MainPage() {
         }
       } catch (err) {
         console.error("Failed to fetch keywords", err);
+      } finally {
+        setKeywordsLoading(false);
       }
     };
 
@@ -219,34 +223,25 @@ export default function MainPage() {
       </CanvasWrapper>
       <KeywordArea>
         <KeywordTitle>현재 사용자가 가장 많이 언급한 키워드</KeywordTitle>
-        {keywords.length > 0 ? (
-          keywords.map((item, index) => (
-            <GlassCard
-              key={index}
-              content={item.keyword}
-              percentage={item.percentage}
-              color={KEYWORD_COLORS[index % KEYWORD_COLORS.length]}
-            />
-          ))
-        ) : (
-          <>
-            <GlassCard
-              content="데이터 로딩 중..."
-              percentage={0}
-              color="#e0e0e0"
-            />
-            <GlassCard
-              content="데이터 로딩 중..."
-              percentage={0}
-              color="#e0e0e0"
-            />
-            <GlassCard
-              content="데이터 로딩 중..."
-              percentage={0}
-              color="#e0e0e0"
-            />
-          </>
-        )}
+        {keywords.length > 0
+          ? keywords.map((item, index) => (
+              <GlassCard
+                key={index}
+                content={item.keyword}
+                percentage={item.percentage}
+                color={KEYWORD_COLORS[index % KEYWORD_COLORS.length]}
+              />
+            ))
+          : Array.from({ length: 3 }, (_, i) => (
+              <GlassCard
+                key={i}
+                content={
+                  keywordsLoading ? "데이터 로딩 중..." : "데이터 수집 중..."
+                }
+                percentage={0}
+                color="#e0e0e0"
+              />
+            ))}
       </KeywordArea>
 
       <ResponseArea>
