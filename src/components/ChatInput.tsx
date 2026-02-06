@@ -15,7 +15,7 @@ const InputWrapper = styled.div`
 const InputContainer = styled.div`
   position: relative;
   width: 100%;
-  
+
   &::after {
     content: "";
     position: absolute;
@@ -62,11 +62,13 @@ const GlassInput = styled.input<{ $hasError?: boolean }>`
   transition: all 0.25s ease;
 
   &::placeholder {
-    color: ${(p) => (p.$hasError ? "rgba(255, 100, 100, 0.6)" : "rgba(26, 26, 46, 0.4)")};
+    color: ${(p) =>
+      p.$hasError ? "rgba(255, 100, 100, 0.6)" : "rgba(26, 26, 46, 0.4)"};
   }
 
   &:focus {
-    border-color: ${(p) => (p.$hasError ? "#ff4d4d" : "rgba(180, 180, 255, 0.9)")};
+    border-color: ${(p) =>
+      p.$hasError ? "#ff4d4d" : "rgba(180, 180, 255, 0.9)"};
     box-shadow: ${(p) =>
       p.$hasError
         ? "0 8px 32px 0 rgba(255, 0, 0, 0.2), 0 0 0 3px rgba(255, 50, 50, 0.2)"
@@ -95,7 +97,7 @@ export default function ChatInput({
   value,
   onChange,
   onSubmit,
-  placeholder = "Ask anything...",
+  placeholder = "Void에게 털어놓기",
   disabled = false,
   error = null,
 }: ChatInputProps) {

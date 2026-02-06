@@ -49,6 +49,13 @@ const GlassCard = styled(motion.div)`
     background: rgba(31, 38, 135, 0.15);
     border-radius: 2px;
   }
+
+  @media (max-width: 430px) {
+    padding: 16px 20px;
+    font-size: 14px;
+    border-radius: 20px;
+    max-height: 250px;
+  }
 `;
 
 interface ResponseBoxProps {
