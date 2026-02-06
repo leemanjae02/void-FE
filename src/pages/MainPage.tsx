@@ -218,7 +218,7 @@ export default function MainPage() {
         </Canvas>
       </CanvasWrapper>
       <KeywordArea>
-        <KeywordTitle>현재 사용자가 가장 많이 선택한 키워드</KeywordTitle>
+        <KeywordTitle>현재 사용자가 가장 많이 언급한 키워드</KeywordTitle>
         {keywords.length > 0 ? (
           keywords.map((item, index) => (
             <GlassCard
@@ -253,7 +253,7 @@ export default function MainPage() {
         <ResponseBox
           content={
             !hasInteracted && response === null
-              ? "VOID는 별도의 회원가입 절차가 없으며, 서비스 이용 과정에서 어떠한 개인정보도 서버에 저장하지 않으므로 안심하고 이용하실 수 있습니다."
+              ? "Void는 별도의 회원가입 절차가 없으며, 서비스 이용 과정에서 어떠한 개인정보도 서버에 저장하지 않으므로 안심하고 이용하셔도 됩니다."
               : response
           }
         />
